@@ -70,7 +70,7 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
             .AddFormParameter("securitytoken", securityToken)
             .SetCookies(loginPageCookies)
             .SetHeader("Content-Type", "application/x-www-form-urlencoded")
-            .SetHeader("Referer", loginUrl)
+            .SetHeader("Referer", Settings.BaseUrl + "ajax/login.php")
             .Build();
 
         var response = await ExecuteAuth(authLoginRequest);
