@@ -147,12 +147,14 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
         {
             var sessionCookies = GetCookies() ?? new Dictionary<string, string>();
 
-            var tokenPageRequest = new HttpRequestBuilder(Settings.BaseUrl + "ajax/login.php")
+            var detailsPageRequest = new HttpRequestBuilder(Settings.BaseUrl)
+                .AddQueryParam("p", "torrents")
+                .AddQueryParam("pid", "10")
                 .SetCookies(sessionCookies)
                 .Build();
 
-            var tokenPage = await ExecuteAuth(tokenPageRequest);
-            var securityToken = await ExtractSecurityTokenAsync(tokenPage.Content);
+            var detailsPage = await _httpClient.ExecuteProxiedAsync(detailsPageRequest, Definition);
+            var securityToken = await ExtractSecurityTokenAsync(detailsPage.Content);
 
             if (securityToken.IsNullOrWhiteSpace())
             {
