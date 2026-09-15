@@ -22,7 +22,11 @@ public class BigBbsRequestGenerator : IIndexerRequestGenerator
 
     private IEnumerable<IndexerRequest> GetPagedRequests(string term, int[] categories)
     {
-        var queryCollection = new NameValueCollection();
+        var queryCollection = new NameValueCollection
+        {
+            { "p", "torrents" },
+            { "pid", "10" },
+        };
 
         var catList = _capabilities.Categories.MapTorznabCapsToTrackers(categories);
         foreach (var cat in catList)
@@ -40,7 +44,7 @@ public class BigBbsRequestGenerator : IIndexerRequestGenerator
         queryCollection.Set("sortOptions[sortBy]", _settings.SortBy.ToString().ToLowerInvariant());
         queryCollection.Set("sortOptions[sortOrder]", _settings.SortOrder.ToString().ToLowerInvariant());
 
-        var searchUrl = $"{_settings.BaseUrl.TrimEnd('/')}/?p=torrents&pid=10&{queryCollection.GetQueryString()}";
+        var searchUrl = $"{_settings.BaseUrl.TrimEnd('/')}/?{queryCollection.GetQueryString()}";
 
         yield return new IndexerRequest(searchUrl, HttpAccept.Html);
     }

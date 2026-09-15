@@ -23,7 +23,6 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
     public override string Language => "pl-PL";
     public override IndexerPrivacy Privacy => IndexerPrivacy.Private;
     public override IndexerCapabilities Capabilities => SetCapabilities();
-    private string LoginUrl => Settings.BaseUrl + "?p=home&pid=1";
 
     public BigBbs(IIndexerHttpClient httpClient, IEventAggregator eventAggregator, IIndexerStatusService indexerStatusService, IConfigService configService, Logger logger)
         : base(httpClient, eventAggregator, indexerStatusService, configService, logger)
@@ -44,7 +43,12 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
     {
         Cookies = null;
 
-        var loginPage = await ExecuteAuth(new HttpRequest(LoginUrl));
+        var loginPageRequest = new HttpRequestBuilder(Settings.BaseUrl)
+            .AddQueryParam("p", "home")
+            .AddQueryParam("pid", "1")
+            .Build();
+
+        var loginPage = await _httpClient.ExecuteProxiedAsync(loginPageRequest, Definition);
         var loginPageCookies = loginPage.GetCookies();
 
         var securityToken = await ExtractSecurityTokenAsync(loginPage.Content);
@@ -54,15 +58,11 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
             throw new IndexerAuthException("Could not find security token");
         }
 
-        var loginUrl = Settings.BaseUrl + "ajax/login.php";
-
-        var requestBuilder = new HttpRequestBuilder(loginUrl)
-        {
-            LogResponseContent = true,
-            Method = HttpMethod.Post
-        };
-
-        var authLoginRequest = requestBuilder
+        var authLoginRequest = new HttpRequestBuilder(Settings.BaseUrl + "ajax/login.php")
+            {
+                LogResponseContent = true,
+                Method = HttpMethod.Post
+            }
             .AddFormParameter("action", "login")
             .AddFormParameter("loginbox_membername", Settings.Username)
             .AddFormParameter("loginbox_password", Settings.Password)
@@ -147,7 +147,7 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
         {
             var sessionCookies = GetCookies() ?? new Dictionary<string, string>();
 
-            var tokenPageRequest = new HttpRequestBuilder(LoginUrl)
+            var tokenPageRequest = new HttpRequestBuilder(Settings.BaseUrl + "ajax/login.php")
                 .SetCookies(sessionCookies)
                 .Build();
 
@@ -160,9 +160,7 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
                 return;
             }
 
-            var thankUrl = Settings.BaseUrl + "ajax/torrents.php";
-
-            var thankRequest = new HttpRequestBuilder(thankUrl)
+            var thankRequest = new HttpRequestBuilder(Settings.BaseUrl + "ajax/torrents.php")
                 {
                     Method = HttpMethod.Post
                 }
