@@ -106,16 +106,12 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
         var parser = new HtmlParser();
         using var dom = await parser.ParseDocumentAsync(content);
 
-        var scripts = dom.QuerySelectorAll("script");
-
-        var securityToken = scripts
+        return dom.QuerySelectorAll("script")
             .Where(s => s.TextContent.Contains("stKey:"))
             .Select(s => Regex.Match(s.TextContent, "stKey: \"(.+?)\","))
             .Where(m => m.Success)
             .Select(m => m.Groups[1].Value)
             .FirstOrDefault();
-
-        return securityToken;
     }
 
     public override async Task<IndexerDownloadResponse> Download(Uri link)
