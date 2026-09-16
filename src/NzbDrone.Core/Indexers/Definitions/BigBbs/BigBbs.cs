@@ -93,14 +93,14 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
 
     protected override bool CheckIfLoginNeeded(HttpResponse httpResponse)
     {
-        return httpResponse.Content.Contains("error") || httpResponse.Content.Contains("-ERROR-");
+        return !httpResponse.Content.Contains("https://bigbbs.eu/?p=logout");
     }
 
     private static async Task<string> ExtractSecurityTokenAsync(string content)
     {
         if (content.IsNullOrWhiteSpace())
         {
-            return string.Empty;
+            return null;
         }
 
         var parser = new HtmlParser();
@@ -108,15 +108,14 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
 
         var scripts = dom.QuerySelectorAll("script");
 
-        var securityToken =
-            (from script in scripts
-             where script.TextContent.Contains("stKey:")
-             select Regex.Match(script.TextContent, "stKey: \"(.+?)\",")
-                into match
-             where match.Success
-             select match.Groups[1].Value).FirstOrDefault();
+        var securityToken = scripts
+            .Where(s => s.TextContent.Contains("stKey:"))
+            .Select(s => Regex.Match(s.TextContent, "stKey: \"(.+?)\","))
+            .Where(m => m.Success)
+            .Select(m => m.Groups[1].Value)
+            .FirstOrDefault();
 
-        return securityToken ?? string.Empty;
+        return securityToken;
     }
 
     public override async Task<IndexerDownloadResponse> Download(Uri link)
@@ -189,7 +188,7 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
         }
     }
 
-    private IndexerCapabilities SetCapabilities()
+    private static IndexerCapabilities SetCapabilities()
     {
         var caps = new IndexerCapabilities
         {
