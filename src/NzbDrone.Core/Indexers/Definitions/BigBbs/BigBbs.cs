@@ -93,7 +93,7 @@ public class BigBbs : TorrentIndexerBase<BigBbsSettings>
 
     protected override bool CheckIfLoginNeeded(HttpResponse httpResponse)
     {
-        return !httpResponse.Content.Contains("https://bigbbs.eu/?p=logout");
+        return !httpResponse.Content.Contains("p=logout");
     }
 
     private static async Task<string> ExtractSecurityTokenAsync(string content)
